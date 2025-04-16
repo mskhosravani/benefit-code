@@ -1,53 +1,107 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
   <title>Check Benefit Code</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      max-width: 600px;
+      margin: auto;
+      background-color: #f6f6f6;
+    }
+
+    h1 {
+      color: #2c3e50;
+    }
+
+    input, button {
+      padding: 0.5rem;
+      font-size: 1rem;
+      margin-top: 1rem;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    button {
+      background-color: #2ecc71;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #27ae60;
+    }
+
+    #result {
+      margin-top: 1.5rem;
+      font-size: 1.1rem;
+      color: #333;
+    }
+  </style>
 </head>
 <body>
   <h1>Benefit Code Checker</h1>
   <input type="text" id="studentNumber" placeholder="Enter your student number" />
-  <button onclick="getBenefitCode()">Check</button>
+  <button>Check</button>
   <p id="result"></p>
 
   <script>
-    // Replace with your Supabase URL and anon key
-    const supabaseUrl = "https://kgyeqttsisunwhghbfie.supabase.co";
+    // 🔐 Replace these with your actual Supabase project credentials
+    const supabaseUrl = 'https://kgyeqttsisunwhghbfie.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtneWVxdHRzaXN1bndoZ2hiZmllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4MTEzODcsImV4cCI6MjA2MDM4NzM4N30.P7fs6bu20zfRQqwkALT3XSmUDLFbZLj51-hEROPuhU0';
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    // Wait until page is fully loaded before assigning button event
+    window.onload = () => {
+      document.querySelector("button").onclick = getBenefitCode;
+    }
 
     async function getBenefitCode() {
-      const studentNumber = document.getElementById('studentNumber').value;
+      const studentNumber = document.getElementById('studentNumber').value.trim();
       const resultEl = document.getElementById('result');
+      resultEl.textContent = "Checking...";
 
-      // Get student ID
-      const { data: student, error: studentError } = await supabase
-        .from('students')
-        .select('id')
-        .eq('student_number', studentNumber)
-        .single();
-
-      if (studentError || !student) {
-        resultEl.textContent = 'Student not found.';
+      if (!studentNumber) {
+        resultEl.textContent = "Please enter a student number.";
         return;
       }
 
-      // Get active benefit code
-      const { data: code, error: codeError } = await supabase
-        .from('benefit_codes')
-        .select('benefit_code')
-        .eq('student_id', student.id)
-        .eq('assignment_status', 'active')
-        .single();
+      try {
+        // Get student ID
+        const { data: student, error: studentError } = await supabase
+          .from('students')
+          .select('id')
+          .eq('student_number', studentNumber)
+          .single();
 
-      if (codeError || !code) {
-        resultEl.textContent = 'No active benefit code assigned.';
-        return;
+        if (studentError || !student) {
+          resultEl.textContent = 'Student not found.';
+          return;
+        }
+
+        // Get active benefit code
+        const { data: code, error: codeError } = await supabase
+          .from('benefit_codes')
+          .select('benefit_code')
+          .eq('student_id', student.id)
+          .eq('assignment_status', 'active')
+          .single();
+
+        if (codeError || !code) {
+          resultEl.textContent = 'No active benefit code assigned.';
+          return;
+        }
+
+        resultEl.textContent = `🎉 Your Benefit Code: ${code.benefit_code}`;
+      } catch (err) {
+        resultEl.textContent = 'An unexpected error occurred.';
+        console.error(err);
       }
-
-      resultEl.textContent = `Your Benefit Code: ${code.benefit_code}`;
     }
   </script>
 </body>
 </html>
-
