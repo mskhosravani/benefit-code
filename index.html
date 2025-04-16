@@ -1,1 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Check Benefit Code</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
+<body>
+  <h1>Benefit Code Checker</h1>
+  <input type="text" id="studentNumber" placeholder="Enter your student number" />
+  <button onclick="getBenefitCode()">Check</button>
+  <p id="result"></p>
+
+  <script>
+    // Replace with your Supabase URL and anon key
+    const supabaseUrl = "https://kgyeqttsisunwhghbfie.supabase.co";
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtneWVxdHRzaXN1bndoZ2hiZmllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4MTEzODcsImV4cCI6MjA2MDM4NzM4N30.P7fs6bu20zfRQqwkALT3XSmUDLFbZLj51-hEROPuhU0';
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+    async function getBenefitCode() {
+      const studentNumber = document.getElementById('studentNumber').value;
+      const resultEl = document.getElementById('result');
+
+      // Get student ID
+      const { data: student, error: studentError } = await supabase
+        .from('students')
+        .select('id')
+        .eq('student_number', studentNumber)
+        .single();
+
+      if (studentError || !student) {
+        resultEl.textContent = 'Student not found.';
+        return;
+      }
+
+      // Get active benefit code
+      const { data: code, error: codeError } = await supabase
+        .from('benefit_codes')
+        .select('benefit_code')
+        .eq('student_id', student.id)
+        .eq('assignment_status', 'active')
+        .single();
+
+      if (codeError || !code) {
+        resultEl.textContent = 'No active benefit code assigned.';
+        return;
+      }
+
+      resultEl.textContent = `Your Benefit Code: ${code.benefit_code}`;
+    }
+  </script>
+</body>
+</html>
 
