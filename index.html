@@ -46,62 +46,58 @@
 <body>
   <h1>Benefit Code Checker</h1>
   <input type="text" id="studentNumber" placeholder="Enter your student number" />
-  <button>Check</button>
+  <button id="checkButton">Check</button>
   <p id="result"></p>
 
   <script>
-    // 🔐 Replace these with your actual Supabase project credentials
-    const supabaseUrl = 'https://kgyeqttsisunwhghbfie.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtneWVxdHRzaXN1bndoZ2hiZmllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4MTEzODcsImV4cCI6MjA2MDM4NzM4N30.P7fs6bu20zfRQqwkALT3XSmUDLFbZLj51-hEROPuhU0';
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-
-    // Wait until page is fully loaded before assigning button event
+    // Make sure everything waits for the page (and script) to load
     window.onload = () => {
-      document.querySelector("button").onclick = getBenefitCode;
-    }
+      // ✅ Initialize Supabase client inside the load handler
+      const supabaseUrl = 'https://kgyeqttsisunwhghbfie.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtneWVxdHRzaXN1bndoZ2hiZmllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4MTEzODcsImV4cCI6MjA2MDM4NzM4N30.P7fs6bu20zfRQqwkALT3XSmUDLFbZLj51-hEROPuhU0';
+      const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-    async function getBenefitCode() {
-      const studentNumber = document.getElementById('studentNumber').value.trim();
-      const resultEl = document.getElementById('result');
-      resultEl.textContent = "Checking...";
+      document.getElementById("checkButton").onclick = async function getBenefitCode() {
+        const studentNumber = document.getElementById('studentNumber').value.trim();
+        const resultEl = document.getElementById('result');
+        resultEl.textContent = "Checking...";
 
-      if (!studentNumber) {
-        resultEl.textContent = "Please enter a student number.";
-        return;
-      }
-
-      try {
-        // Get student ID
-        const { data: student, error: studentError } = await supabase
-          .from('students')
-          .select('id')
-          .eq('student_number', studentNumber)
-          .single();
-
-        if (studentError || !student) {
-          resultEl.textContent = 'Student not found.';
+        if (!studentNumber) {
+          resultEl.textContent = "Please enter a student number.";
           return;
         }
 
-        // Get active benefit code
-        const { data: code, error: codeError } = await supabase
-          .from('benefit_codes')
-          .select('benefit_code')
-          .eq('student_id', student.id)
-          .eq('assignment_status', 'active')
-          .single();
+        try {
+          const { data: student, error: studentError } = await supabase
+            .from('students')
+            .select('id')
+            .eq('student_number', studentNumber)
+            .single();
 
-        if (codeError || !code) {
-          resultEl.textContent = 'No active benefit code assigned.';
-          return;
+          if (studentError || !student) {
+            resultEl.textContent = 'Student not found.';
+            return;
+          }
+
+          const { data: code, error: codeError } = await supabase
+            .from('benefit_codes')
+            .select('benefit_code')
+            .eq('student_id', student.id)
+            .eq('assignment_status', 'active')
+            .single();
+
+          if (codeError || !code) {
+            resultEl.textContent = 'No active benefit code assigned.';
+            return;
+          }
+
+          resultEl.textContent = `🎉 Your Benefit Code: ${code.benefit_code}`;
+        } catch (err) {
+          resultEl.textContent = 'An unexpected error occurred.';
+          console.error(err);
         }
-
-        resultEl.textContent = `🎉 Your Benefit Code: ${code.benefit_code}`;
-      } catch (err) {
-        resultEl.textContent = 'An unexpected error occurred.';
-        console.error(err);
-      }
-    }
+      };
+    };
   </script>
 </body>
 </html>
